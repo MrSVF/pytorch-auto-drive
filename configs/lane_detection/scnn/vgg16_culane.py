@@ -23,7 +23,7 @@ train = dict(
     val_num_steps=0,  # Seg IoU validation (mostly useless)
     save_dir='./checkpoints',
 
-    input_size=(288, 800),
+    input_size=(1, 1),#(288, 800),
     original_size=(590, 1640),
     num_classes=5,
     num_epochs=12,
@@ -34,7 +34,7 @@ train = dict(
 test = dict(
     exp_name='vgg16_scnn_culane',
     workers=10,
-    batch_size=80,
+    batch_size=40,
     checkpoint='./checkpoints/vgg16_scnn_culane/model.pt',
     # Device args
     device='cuda',
@@ -46,7 +46,7 @@ test = dict(
     ppl=18,
     thresh=0.3,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
-    input_size=(288, 800),
+    input_size=(1, 1),#(288, 800), 800, 1920
     original_size=(590, 1640),
     max_lane=4,
     dataset_name='culane'

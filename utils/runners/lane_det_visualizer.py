@@ -1,6 +1,9 @@
 import os
 import torch
+import cv2
+import json
 import numpy as np
+from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 from abc import abstractmethod
 if torch.__version__ >= '1.6.0':
@@ -8,6 +11,7 @@ if torch.__version__ >= '1.6.0':
 else:
     from ..torch_amp_dummy import autocast
 
+from torchvision.transforms.functional import crop
 from .base import BaseVisualizer, BaseVideoVisualizer, get_collate_fn
 from ..datasets import DATASETS
 from ..transforms import TRANSFORMS
@@ -109,6 +113,7 @@ class LaneDetDir(LaneDetVisualizer):
                                      transforms=TRANSFORMS.from_dict(cfg['test_augmentation']),
                                      keypoint_process_fn=lane_label_process_fn)
         collate_fn = get_collate_fn('dict_collate_fn')  # Use dicts for customized target
+        # print('dataset:', len(dataset.images))
         dataloader = torch.utils.data.DataLoader(dataset=dataset,
                                                  batch_size=self._cfg['batch_size'],
                                                  collate_fn=collate_fn,
@@ -118,8 +123,10 @@ class LaneDetDir(LaneDetVisualizer):
         return dataloader, cfg['dataset']['name']
 
     def run(self):
+        res_json =[]
         for imgs, original_imgs, targets in tqdm(self.dataloader):
             filenames = [i['filename'] for i in targets]
+            res_filename = os.path.join(os.path.dirname(filenames[0]), 'result.json')
             keypoints = [i['keypoint'] for i in targets]
             gt_keypoints = [i['gt_keypoint'] for i in targets]
             masks = [i['mask'] for i in targets]
@@ -138,6 +145,34 @@ class LaneDetDir(LaneDetVisualizer):
                 imgs = imgs.to(self.device)
                 original_imgs = original_imgs.to(self.device)
                 cps, keypoints = self.lane_inference(imgs, original_imgs.shape[2:])
+                np_kps = np.array(keypoints)
+                ind_red_lines = []
+                fnames = []
+                for i, fnname in zip(range(original_imgs.shape[0]), filenames):
+                    np_kpt = np_kps[i]
+                    cross = False
+                    for j in range(len(np_kpt)):
+                        np_kp = np_kpt[j]
+                        np_kp_clear = np_kp[np_kp.min(axis=1)>=0,:]
+                        x = np_kp_clear[:,0].reshape(-1, 1)
+                        y = np_kp_clear[:,1].reshape(-1, 1)
+                        reg = LinearRegression().fit(x, y)
+                        k_koef = reg.coef_[0][0]
+                        b_koef = reg.intercept_[0]
+                        x1_red_line = 250
+                        x2_red_line = original_imgs.shape[2:][1] - 100
+                        y_red_line = original_imgs.shape[2:][0]
+                        x_down_pos = (y_red_line - b_koef) / k_koef
+
+                        if (x1_red_line < x_down_pos < x2_red_line) and np_kp_clear.shape[0] >= 3:
+                            cross = True
+                    if cross:
+                        ind_red_lines.append(i)        
+                        fnames.append(fnname)
+                    #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0
+                    #     original_imgs[i] = original_imgs[..., [2, 1, 0]][i].cpu().numpy().astype(np.uint8)        
+                    #     cv2.line(original_imgs[i], (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=10)
+
             results = lane_detection_visualize_batched(original_imgs,
                                                        masks=masks,
                                                        keypoints=keypoints,
@@ -146,9 +181,16 @@ class LaneDetDir(LaneDetVisualizer):
                                                        mask_colors=self._cfg['colors'],
                                                        keypoint_color=self._cfg['keypoint_color'],
                                                        std=None, mean=None, style=self._cfg['style'],
-                                                       compare_gt_metric=self._cfg['metric'])
+                                                       compare_gt_metric=self._cfg['metric'],
+                                                       idx_red_lines=ind_red_lines)
             save_images(results, filenames=filenames)
-
+        
+            res_json += [
+                {file_name.split('/')[-1]: 1} if file_name in fnames else {file_name.split('/')[-1]: 0} for file_name in filenames
+                ]
+        
+        with open(res_filename, 'w') as f:
+            json.dump(res_json, f)
 
 class LaneDetVideo(BaseVideoVisualizer, LaneDetVisualizer):
     def __init__(self, cfg):

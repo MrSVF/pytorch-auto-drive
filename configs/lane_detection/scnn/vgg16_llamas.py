@@ -34,7 +34,7 @@ train = dict(
 test = dict(
     exp_name='vgg16_scnn_llamas',
     workers=10,
-    batch_size=80,
+    batch_size=40,
     checkpoint='./checkpoints/vgg16_scnn_llamas/model.pt',
     # Device args
     device='cuda',

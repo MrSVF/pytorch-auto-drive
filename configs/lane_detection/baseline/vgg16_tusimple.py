@@ -35,7 +35,7 @@ train = dict(
 test = dict(
     exp_name='vgg16_baseline_tusimple',
     workers=10,
-    batch_size=80,
+    batch_size=40,
     checkpoint='./checkpoints/vgg16_baseline_tusimple/model.pt',
     # Device args
     device='cuda',

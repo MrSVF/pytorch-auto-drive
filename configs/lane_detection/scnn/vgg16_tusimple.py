@@ -34,7 +34,7 @@ train = dict(
 test = dict(
     exp_name='vgg16_scnn_tusimple',
     workers=10,
-    batch_size=80,
+    batch_size=40,
     checkpoint='./checkpoints/vgg16_scnn_tusimple/model.pt',
     # Device args
     device='cuda',
@@ -45,8 +45,8 @@ test = dict(
     ppl=56,
     thresh=0.3,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
-    input_size=(360, 640),
-    original_size=(720, 1280),
+    input_size=(800, 960),
+    original_size=(800, 960),
     max_lane=5,
     dataset_name='tusimple'
 )

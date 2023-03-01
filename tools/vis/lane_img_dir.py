@@ -1,6 +1,10 @@
 import argparse
 import torch
 
+import sys
+sys.path.append("adasys/ml_models/lane_detect/pytorch_auto_drive")
+sys.path.append("api_server/adasys/ml_models/lane_detect/pytorch_auto_drive")
+
 from importmagician import import_from
 with import_from('./'):
     from utils.args import read_config, parse_arg_cfg, cmd_dict, add_shortcuts
