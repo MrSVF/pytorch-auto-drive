@@ -28,8 +28,9 @@ class DashLaneDet():
         up_border = frame.shape[0]*0.51
         x_leftdown =  max((down_border - b_koef) / k_koef - 50, 0)
         x_leftup =    max((up_border   - b_koef) / k_koef - 20, 0)
-        x_rightup =   min((up_border   - b_koef) / k_koef + 20, frame.shape[1])
-        x_rightdown = min((down_border - b_koef) / k_koef + 50, frame.shape[1])
+        x_rightup =   min((up_border   - b_koef) / k_koef + 20, frame.shape[1]-1)
+        x_rightdown = min((down_border - b_koef) / k_koef + 50, frame.shape[1]-1)
+        print('POINTS:', x_leftdown, x_leftup, x_rightup, x_rightdown, up_border)
 
         vertices = np.array([[
             (x_leftdown, down_border),
