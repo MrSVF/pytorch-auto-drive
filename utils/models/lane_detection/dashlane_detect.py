@@ -30,7 +30,7 @@ class DashLaneDet():
         x_leftup =    max((up_border   - b_koef) / k_koef - 20, 0)
         x_rightup =   min((up_border   - b_koef) / k_koef + 20, frame.shape[1]-1)
         x_rightdown = min((down_border - b_koef) / k_koef + 50, frame.shape[1]-1)
-        print('POINTS:', x_leftdown, x_leftup, x_rightup, x_rightdown, up_border)
+        print('POINTS:', x_leftdown, x_leftup, x_rightup, x_rightdown, up_border, down_border)
 
         vertices = np.array([[
             (x_leftdown, down_border),
@@ -53,7 +53,7 @@ class DashLaneDet():
         # cv2.imshow('edge_img', edge_img)
         # find contours, opencv4
         contours, hierarchy = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
+        print('frame:', frame.sum())
         approx_max:any = None
         approxes = []
 
@@ -64,6 +64,7 @@ class DashLaneDet():
                 approx = cv2.approxPolyDP(contour, epsilon, True)
 
                 (x, y), (w, h), theta = cv2.minAreaRect(contour)
+                print('(w, h):', w, h)
                 if w > 100 or h > 100:
                     return False
 
