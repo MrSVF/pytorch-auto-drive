@@ -18,6 +18,8 @@ from ..transforms import TRANSFORMS
 from ..lane_det_utils import lane_as_segmentation_inference
 from ..vis_utils import lane_detection_visualize_batched, save_images
 
+from utils.models.lane_detection.dashlane_detect import DashLaneDet
+
 
 def lane_label_process_fn(label):
     # The CULane format
@@ -123,6 +125,7 @@ class LaneDetDir(LaneDetVisualizer):
         return dataloader, cfg['dataset']['name']
 
     def run(self):
+        dashline_detector = DashLaneDet()
         res_json =[]
         for imgs, original_imgs, targets in tqdm(self.dataloader):
             filenames = [i['filename'] for i in targets]
@@ -148,6 +151,7 @@ class LaneDetDir(LaneDetVisualizer):
                 np_kps = np.array(keypoints)
                 ind_red_lines = []
                 fnames = []
+                solidlines = []
                 for i, fnname in zip(range(original_imgs.shape[0]), filenames):
                     np_kpt = np_kps[i]
                     cross = False
@@ -169,6 +173,10 @@ class LaneDetDir(LaneDetVisualizer):
                     if cross:
                         ind_red_lines.append(i)        
                         fnames.append(fnname)
+
+                        isdashline = dashline_detector.detect_stoplineB(original_imgs[i])
+                        if not isdashline:
+                            solidlines.append(fnname)
                     #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0
                     #     original_imgs[i] = original_imgs[..., [2, 1, 0]][i].cpu().numpy().astype(np.uint8)        
                     #     cv2.line(original_imgs[i], (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=10)
@@ -186,7 +194,9 @@ class LaneDetDir(LaneDetVisualizer):
             save_images(results, filenames=filenames)
         
             res_json += [
-                {file_name.split('/')[-1]: 1} if file_name in fnames else {file_name.split('/')[-1]: 0} for file_name in filenames
+                {file_name.split('/')[-1]: 1} if file_name in fnames \
+                    else ({file_name.split('/')[-1]: 2} if file_name in solidlines else {file_name.split('/')[-1]: 0}) \
+                        for file_name in filenames
                 ]
         
         with open(res_filename, 'w') as f:
