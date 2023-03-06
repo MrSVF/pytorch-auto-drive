@@ -143,6 +143,7 @@ class LaneDetDir(LaneDetVisualizer):
             else:
                 masks = torch.stack(masks)
             if self._cfg['pred']:  # Inference keypoints
+                imgs_to_cv2 = original_imgs.numpy().transpose(0, 2, 3, 1)
                 if masks is not None:
                     masks = masks.to(self.device)
                 imgs = imgs.to(self.device)
@@ -174,7 +175,7 @@ class LaneDetDir(LaneDetVisualizer):
                         ind_red_lines.append(i)        
                         fnames.append(fnname)
 
-                        isdashline = dashline_detector.detect_stoplineB(original_imgs[i])
+                        isdashline = dashline_detector.detect_stoplineB(imgs_to_cv2[i], (k_koef, b_koef))
                         if not isdashline:
                             solidlines.append(fnname)
                     #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0

@@ -12,13 +12,10 @@ class DashLaneDet():
         ROI_image = cv2.bitwise_and(img, mask)
         return ROI_image
 
-    def detect_stoplineB(self, x):
+    def detect_stoplineB(self, x, line_koefs):
         frame = x.copy()
-        img = frame.copy()
-        min_dashline_length = 0 #330 #defualt 250
-        #max_dashline_length = 250
-        max_distance = 500 #120 #defualt 70
-        min_distance = 80
+        k_koef = line_koefs[0]
+        b_koef = line_koefs[1]
 
         # gray
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -27,15 +24,22 @@ class DashLaneDet():
         kernel_size = 5
         blur_frame = cv2.GaussianBlur(gray, (kernel_size, kernel_size), 0)
         
+        down_border = frame.shape[0]*0.73
+        up_border = frame.shape[0]*0.51
+        x_leftdown =  max((down_border - b_koef) / k_koef - 50, 0)
+        x_leftup =    max((up_border   - b_koef) / k_koef - 20, 0)
+        x_rightup =   min((up_border   - b_koef) / k_koef + 20, frame.shape[1])
+        x_rightdown = min((down_border - b_koef) / k_koef + 50, frame.shape[1])
+
         vertices = np.array([[
-            (460, frame.shape[0]*0.73), #*0.63
-            (580, frame.shape[0]*0.51), #*0.58
-            (750, frame.shape[0]*0.51), #*0.58
-            (790, frame.shape[0]*0.73)  #*0.63
+            (x_leftdown, down_border),
+            (x_leftup, up_border),
+            (x_rightup, up_border),
+            (x_rightdown, down_border)
         ]], dtype=np.int32)
 
         roi = self.region_of_interest(blur_frame, vertices)
-        cv2.imshow("roi:", roi)
+        # cv2.imshow("roi:", roi)
         # filter
         img_mask = cv2.inRange(roi, 100, 400) ## default 160, 220
         img_result = cv2.bitwise_and(roi, roi, mask=img_mask)
@@ -45,7 +49,7 @@ class DashLaneDet():
         # canny
         low_threshold, high_threshold = 70, 210 #70, 210
         edge_img = cv2.Canny(np.uint8(dest), low_threshold, high_threshold)
-        cv2.imshow('edge_img', edge_img)
+        # cv2.imshow('edge_img', edge_img)
         # find contours, opencv4
         contours, hierarchy = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
