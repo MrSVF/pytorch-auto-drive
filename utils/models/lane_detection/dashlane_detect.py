@@ -53,7 +53,6 @@ class DashLaneDet():
         # cv2.imshow('edge_img', edge_img)
         # find contours, opencv4
         contours, hierarchy = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        print('frame:', frame.sum())
         approx_max:any = None
         approxes = []
 

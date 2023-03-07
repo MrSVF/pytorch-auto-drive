@@ -121,7 +121,7 @@ class LaneDetDir(LaneDetVisualizer):
                                                  collate_fn=collate_fn,
                                                  num_workers=self._cfg['workers'],
                                                  shuffle=False)
-
+        print('dataloader:', dataloader)
         return dataloader, cfg['dataset']['name']
 
     def run(self):
@@ -143,8 +143,8 @@ class LaneDetDir(LaneDetVisualizer):
             else:
                 masks = torch.stack(masks)
             if self._cfg['pred']:  # Inference keypoints
-                imgs_to_cv2 = original_imgs.numpy().transpose(0, 2, 3, 1)
-                print('imgs_to_cv2:', imgs_to_cv2.sum())
+                imgs_to_cv2 = 255 * original_imgs.numpy().transpose(0, 2, 3, 1)[:,:,:,::-1]
+                print('imgs_to_cv2:', imgs_to_cv2[0][0][0], 'filename:', filenames)
                 if masks is not None:
                     masks = masks.to(self.device)
                 imgs = imgs.to(self.device)
