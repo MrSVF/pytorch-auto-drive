@@ -25,7 +25,7 @@ train = dict(
     save_dir='./checkpoints',
 
     input_size=(360, 640),
-    original_size=(720, 1280),
+    original_size=(800, 960), #(720, 1280),
     num_classes=7,
     num_epochs=50,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
@@ -48,7 +48,7 @@ test = dict(
     thresh=0.3,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
     input_size=(360, 640),
-    original_size=(720, 1280),
+    original_size=(800, 960), #(720, 1280),
     max_lane=5,
     dataset_name='tusimple'
 )
@@ -58,7 +58,7 @@ model = dict(
     num_classes=7,
     dropout_1=0.3,
     dropout_2=0.3,
-    pretrained_weights='erfnet_encoder_pretrained.pth.tar',
+    pretrained_weights=None,#'erfnet_encoder_pretrained.pth.tar',
     lane_classifier_cfg=dict(
         name='EDLaneExist',
         num_output=7 - 1,

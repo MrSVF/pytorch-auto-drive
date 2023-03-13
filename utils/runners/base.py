@@ -59,7 +59,7 @@ class BaseRunner(ABC):
     def get_device_and_move_model(self, *args, **kwargs):
         device = torch.device('cpu')
         if torch.cuda.is_available():
-            device = torch.device('cuda:0')
+            device = torch.device('cuda:1')
         print(device)
         self.model.to(device)
 

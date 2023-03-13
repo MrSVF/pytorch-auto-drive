@@ -1,6 +1,6 @@
 import os
 import torch
-import cv2
+import csv
 import json
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -18,7 +18,7 @@ from ..transforms import TRANSFORMS
 from ..lane_det_utils import lane_as_segmentation_inference
 from ..vis_utils import lane_detection_visualize_batched, save_images
 
-from utils.models.lane_detection.dashlane_detect import DashLaneDet
+from utils.models.lane_detection.solidline_detect import SolidLaneDet
 
 
 def lane_label_process_fn(label):
@@ -121,12 +121,12 @@ class LaneDetDir(LaneDetVisualizer):
                                                  collate_fn=collate_fn,
                                                  num_workers=self._cfg['workers'],
                                                  shuffle=False)
-        print('dataloader:', dataloader)
         return dataloader, cfg['dataset']['name']
 
     def run(self):
-        dashline_detector = DashLaneDet()
+        solidline_detector = SolidLaneDet()
         res_json =[]
+        x_down_poses = []
         for imgs, original_imgs, targets in tqdm(self.dataloader):
             filenames = [i['filename'] for i in targets]
             res_filename = os.path.join(os.path.dirname(filenames[0]), 'result.json')
@@ -144,7 +144,7 @@ class LaneDetDir(LaneDetVisualizer):
                 masks = torch.stack(masks)
             if self._cfg['pred']:  # Inference keypoints
                 imgs_to_cv2 = 255 * original_imgs.numpy().transpose(0, 2, 3, 1)[:,:,:,::-1]
-                print('imgs_to_cv2:', imgs_to_cv2[0][0][0], 'filename:', filenames)
+                # print('imgs_to_cv2:', imgs_to_cv2[0][0][0], 'filename:', filenames)
                 if masks is not None:
                     masks = masks.to(self.device)
                 imgs = imgs.to(self.device)
@@ -153,38 +153,49 @@ class LaneDetDir(LaneDetVisualizer):
                 np_kps = np.array(keypoints)
                 ind_red_lines = []
                 fnames = []
-                # koefs = []
+                koefs = ()
                 solidlines = []
+                up_border = imgs_to_cv2[0].shape[0]*0.51
+                down_border = imgs_to_cv2[0].shape[0]*0.7#73
+                x1_red_line = 220
+                x2_red_line = original_imgs.shape[2:][1] - 100
+                y_red_line = original_imgs.shape[2:][0]
+                x_down_pos = -1
                 for i, fnname in zip(range(original_imgs.shape[0]), filenames):
                     np_kpt = np_kps[i]
                     cross = False
                     for j in range(len(np_kpt)):
                         np_kp = np_kpt[j]
-                        np_kp_clear = np_kp[np_kp.min(axis=1)>=0,:]
-                        x = np_kp_clear[:,0].reshape(-1, 1)
-                        y = np_kp_clear[:,1].reshape(-1, 1)
-                        reg = LinearRegression().fit(x, y)
-                        k_koef = reg.coef_[0][0]
-                        b_koef = reg.intercept_[0]
-                        x1_red_line = 250
-                        x2_red_line = original_imgs.shape[2:][1] - 100
-                        y_red_line = original_imgs.shape[2:][0]
-                        x_down_pos = (y_red_line - b_koef) / k_koef
+                        np_kp_clear = np_kp[np_kp.min(axis=1) >= 0, :]
+                        np_kp_clear = np_kp_clear[np_kp_clear[:,1] <= down_border, :]
+                        # print('np_kp_clear:', np_kp_clear)
+                        if len(np_kp_clear) > 1:
+                            x = np_kp_clear[:,0].reshape(-1, 1)
+                            y = np_kp_clear[:,1].reshape(-1, 1)
+                            reg = LinearRegression().fit(x, y)
+                            k_koef = reg.coef_[0][0]
+                            b_koef = reg.intercept_[0]
+                            x_down_pos = (y_red_line - b_koef) / k_koef
+                            # print('COEFS:', reg.coef_[0][0], reg.intercept_[0], x_down_pos, k_koef, np_kp_clear.shape[0])
 
                         if (x1_red_line < x_down_pos < x2_red_line) and np_kp_clear.shape[0] >= 3:
                             cross = True
+                            koefs = (k_koef, b_koef)
+                            x_down_poses.append(x_down_pos)
+                    
                     if cross:
                         ind_red_lines.append(i)        
                         fnames.append(fnname)
-                        # koefs.append((k_koef, b_koef))
 
-                        isdashline = dashline_detector.detect_stoplineB(imgs_to_cv2[i], (k_koef, b_koef))
-                        print('isdashline:', isdashline)
-                        if not isdashline:
+                        solidline = solidline_detector.detect_stoplineB(imgs_to_cv2[i], koefs, down_border, up_border)
+                        # print('isdashline:', isdashline)
+                        if solidline:
                             solidlines.append(fnname)
                     #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0
                     #     original_imgs[i] = original_imgs[..., [2, 1, 0]][i].cpu().numpy().astype(np.uint8)        
                     #     cv2.line(original_imgs[i], (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=10)
+                    else:
+                        x_down_poses.append(-1)
 
             results = lane_detection_visualize_batched(original_imgs,
                                                        masks=masks,
@@ -199,13 +210,17 @@ class LaneDetDir(LaneDetVisualizer):
             save_images(results, filenames=filenames)
         
             res_json += [
-                {file_name.split('/')[-1]: 1} if file_name in fnames \
-                    else ({file_name.split('/')[-1]: 2} if file_name in solidlines else {file_name.split('/')[-1]: 0}) \
+                {file_name.split('/')[-1]: 2} if file_name in solidlines \
+                    else ({file_name.split('/')[-1]: 1} if file_name in fnames else {file_name.split('/')[-1]: 0}) \
                         for file_name in filenames
                 ]
         
         with open(res_filename, 'w') as f:
             json.dump(res_json, f)
+        
+        with open('x_down.csv', 'w') as myfile:
+            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+            wr.writerow(x_down_poses)
 
 class LaneDetVideo(BaseVideoVisualizer, LaneDetVisualizer):
     def __init__(self, cfg):

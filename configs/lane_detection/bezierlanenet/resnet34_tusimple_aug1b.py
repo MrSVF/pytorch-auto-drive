@@ -34,8 +34,8 @@ train = dict(
 
 test = dict(
     exp_name='resnet34_bezierlanenet_tusimple-aug2',
-    workers=0,
-    batch_size=1,
+    workers=10,
+    batch_size=40,
     checkpoint='./checkpoints/resnet34_bezierlanenet_tusimple-aug2/model.pt',
     # Device args
     device='cuda',

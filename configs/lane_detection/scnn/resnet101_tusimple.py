@@ -34,8 +34,8 @@ train = dict(
 
 test = dict(
     exp_name='resnet101_scnn_tusimple',
-    workers=4,
-    batch_size=32,
+    workers=10, #4,
+    batch_size=32, #32,
     checkpoint='./checkpoints/resnet101_scnn_tusimple/model.pt',
     # Device args
     device='cuda',
@@ -48,7 +48,7 @@ test = dict(
     thresh=0.3,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
     input_size=(360, 640),
-    original_size=(720, 1280),
+    original_size=(800, 960), #(720, 1280),
     max_lane=5,
     dataset_name='tusimple'
 )

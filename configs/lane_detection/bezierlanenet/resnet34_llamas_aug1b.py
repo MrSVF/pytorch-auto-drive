@@ -34,8 +34,8 @@ train = dict(
 
 test = dict(
     exp_name='resnet34_bezierlanenet-aug2_llamas',
-    workers=0,
-    batch_size=1,
+    workers=10,
+    batch_size=40,
     checkpoint='./checkpoints/resnet34_bezierlanenet-aug2_llamas/model.pt',
     # Device args
     device='cuda',
@@ -48,14 +48,14 @@ test = dict(
     thresh=0.3,
     collate_fn='dict_collate_fn',  # 'dict_collate_fn' for LSTR
     input_size=(360, 640),
-    original_size=(717, 1276),
+    original_size=(800, 960),#(717, 1276),
     max_lane=4,
     dataset_name='llamas'
 )
 
 model = dict(
     name='BezierLaneNet',
-    image_height=360,
+    image_height=360, #360
     num_regression_parameters=8,  # 3 x 2 + 2 = 8 (Cubic Bezier Curve)
 
     # Inference parameters
