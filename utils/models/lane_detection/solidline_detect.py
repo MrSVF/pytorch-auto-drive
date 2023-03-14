@@ -67,14 +67,22 @@ class SolidLaneDet():
                     return True
                 elif max(w, h) > 30 and min(w, h) > 7:
                     dashes.append([x, y, w, h])
-            print('len(dashes):', len(dashes))
-            if len(dashes) == 2:
-                dashes_sorted = sorted(dashes, key=lambda x: x[1])
+            
+            dashes_sorted = sorted(dashes, key=lambda x: x[1], reverse=True)
+            dashes_sorted_ok = [dashes_sorted[0]] if len(dashes_sorted) !=0 else []
+            for i in range(len(dashes_sorted)-1):
+                dash_len_i = max(dashes_sorted[i][2], dashes_sorted[i][3])
+                if dashes_sorted[i][1]-dash_len_i/2 > dashes_sorted[i+1][1]:
+                    dashes_sorted_ok.append(dashes_sorted[i+1])
+            
+            if len(dashes_sorted_ok) == 2:
                 print('dashes_sorted:', dashes_sorted)
-                center_distance = np.sqrt((dashes_sorted[1][0]-dashes_sorted[0][0])**2 + (dashes_sorted[1][1]-dashes_sorted[0][1])**2)
+                print('dashes_sorted_ok:', dashes_sorted_ok)
+                center_distance = np.sqrt((dashes_sorted_ok[1][0]-dashes_sorted_ok[0][0])**2 + \
+                                          (dashes_sorted_ok[1][1]-dashes_sorted_ok[0][1])**2)
                 print('center_distance:', center_distance)
-                dash_len1 = max(dashes_sorted[0][2], dashes_sorted[0][3])
-                dash_len2 = max(dashes_sorted[1][2], dashes_sorted[1][3])
+                dash_len1 = max(dashes_sorted_ok[0][2], dashes_sorted_ok[0][3])
+                dash_len2 = max(dashes_sorted_ok[1][2], dashes_sorted_ok[1][3])
                 print('dash_len1/2:', dash_len1/2)
                 print('dash_len2/2:', dash_len2/2)
                 print('dist:', center_distance - dash_len2/2 - dash_len1/2)
@@ -82,6 +90,7 @@ class SolidLaneDet():
                 # dash_angle2 = theta if dashes_sorted[1][2] > dashes_sorted[1][3] else theta + 90
 
                 if center_distance - dash_len2/2 - dash_len1/2 < 23:
+                    print('return True')
                     return True
 
         return False
