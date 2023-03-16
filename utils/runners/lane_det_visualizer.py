@@ -34,6 +34,27 @@ def lane_label_process_fn(label):
 
     return target
 
+def rollavg(a, n):
+    """Outlier filtering function. 
+        The most frequent value within the window is selected.
+
+    Args:
+        a (list): Input data
+        n (integer): sliding window width
+
+    Returns:
+        list: Output data
+    """
+    assert n%2 == 1
+    r, N = int(n/2), len(a)
+    res = []
+    for i in range(N):
+        ar = np.bincount(a[max(i-r,0):min(i+r+1,N)])
+        if len(ar)==3:
+            if ar[1]==ar[2]:
+                ar[2] += 1
+        res.append(np.argmax(ar))
+    return res
 
 class LaneDetVisualizer(BaseVisualizer):
     dataset_statistics = ['keypoint_color']
@@ -143,7 +164,7 @@ class LaneDetDir(LaneDetVisualizer):
             else:
                 masks = torch.stack(masks)
             if self._cfg['pred']:  # Inference keypoints
-                imgs_to_cv2 = 255 * original_imgs.numpy().transpose(0, 2, 3, 1)[:,:,:,::-1]
+                imgs_to_cv2 = (255 * original_imgs.numpy().transpose(0, 2, 3, 1)[:,:,:,::-1]).astype(np.uint8)
                 # print('imgs_to_cv2:', imgs_to_cv2[0][0][0], 'filename:', filenames)
                 if masks is not None:
                     masks = masks.to(self.device)
@@ -188,12 +209,12 @@ class LaneDetDir(LaneDetVisualizer):
                         fnames.append(fnname)
 
                         solidline = solidline_detector.detect_stoplineB(imgs_to_cv2[i], koefs, down_border, up_border)
-                        # print('isdashline:', isdashline)
                         if solidline:
                             solidlines.append(fnname)
                     #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0
                     #     original_imgs[i] = original_imgs[..., [2, 1, 0]][i].cpu().numpy().astype(np.uint8)        
                     #     cv2.line(original_imgs[i], (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=10)
+                        # print('solidlines:', [sol.split('/')[-1] for sol in solidlines])
                     else:
                         x_down_poses.append(-1)
 
@@ -215,12 +236,16 @@ class LaneDetDir(LaneDetVisualizer):
                         for file_name in filenames
                 ]
         
+        arr = [list(dic.values())[0] for dic in res_json]
+        for d, a in zip(res_json, rollavg(arr, 9)):
+            d.update((k, str(a)) for k, v in d.items())
+
         with open(res_filename, 'w') as f:
             json.dump(res_json, f)
         
-        with open('x_down.csv', 'w') as myfile:
-            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-            wr.writerow(x_down_poses)
+        # with open('x_down.csv', 'w') as myfile:
+        #     wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        #     wr.writerow(x_down_poses)
 
 class LaneDetVideo(BaseVideoVisualizer, LaneDetVisualizer):
     def __init__(self, cfg):
