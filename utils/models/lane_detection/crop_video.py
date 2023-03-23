@@ -50,7 +50,7 @@ class Base:
 
         for frame_path in self.frames_paths:
             input_video = self.read_frame(frame_path=os.path.join(self.path, frame_path))
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             output_movie = cv2.VideoWriter(os.path.join(self.path_out, frame_path), fourcc, 30, (960, 800))
 
             while True:
