@@ -32,7 +32,10 @@ class ImageFolderLaneBase(torchvision.datasets.VisionDataset):
 
         # Transforms
         if self.transforms is not None:
+            # print('\n type(self.transforms): ', type(self.transforms))
+            # print('\n img.size: ', img.size)
             img = self.transforms(img)
+            # print('\n img.size(): ', img.size())
 
         # Process potential target
         keypoint = None

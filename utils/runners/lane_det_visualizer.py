@@ -149,6 +149,8 @@ class LaneDetDir(LaneDetVisualizer):
         res_json =[]
         x_down_poses = []
         for imgs, original_imgs, targets in tqdm(self.dataloader):
+            # print('original_imgs:', original_imgs.shape, original_imgs[0,:,0,0], 'imgs:', imgs.shape, imgs[0,:,0,0])
+            # input()
             filenames = [i['filename'] for i in targets]
             res_filename = os.path.join(os.path.dirname(filenames[0]), 'result.json')
             keypoints = [i['keypoint'] for i in targets]
@@ -181,16 +183,16 @@ class LaneDetDir(LaneDetVisualizer):
                 x1_red_line = 220
                 x2_red_line = original_imgs.shape[2:][1] - 100
                 y_red_line = original_imgs.shape[2:][0]
-                x_down_pos = -1
                 for i, fnname in zip(range(original_imgs.shape[0]), filenames):
                     np_kpt = np_kps[i]
                     cross = False
                     for j in range(len(np_kpt)):
+                        x_down_pos = -1
                         np_kp = np_kpt[j]
                         np_kp_clear = np_kp[np_kp.min(axis=1) >= 0, :]
                         np_kp_clear = np_kp_clear[np_kp_clear[:,1] <= down_border, :]
                         # print('np_kp_clear:', np_kp_clear)
-                        if len(np_kp_clear) > 1:
+                        if len(np_kp_clear) >= 6:
                             x = np_kp_clear[:,0].reshape(-1, 1)
                             y = np_kp_clear[:,1].reshape(-1, 1)
                             reg = LinearRegression().fit(x, y)

@@ -25,7 +25,7 @@ train = dict(
     save_dir='./checkpoints',
 
     input_size=(360, 640),
-    original_size=(720, 1280),
+    original_size=(1440, 2560), #(720, 1280),
     num_classes=7,
     num_epochs=50,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
@@ -38,17 +38,17 @@ test = dict(
     batch_size=32, #32,
     checkpoint='./checkpoints/resnet101_scnn_tusimple/model.pt',
     # Device args
-    device='cuda',
+    device='cuda:1',
 
     save_dir='./checkpoints',
 
     seg=True,
     gap=10,
     ppl=56,
-    thresh=0.3,
+    thresh=0.3, #0.3,
     collate_fn=None,  # 'dict_collate_fn' for LSTR
     input_size=(360, 640),
-    original_size=(800, 960), #(720, 1280),
+    original_size=(1440, 2560), #(800, 960), #(720, 1280),
     max_lane=5,
     dataset_name='tusimple'
 )
