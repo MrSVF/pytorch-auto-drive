@@ -180,9 +180,11 @@ class LaneDetDir(LaneDetVisualizer):
                 solidlines = []
                 up_border = imgs_to_cv2[0].shape[0]*0.51
                 down_border = imgs_to_cv2[0].shape[0]*0.7#73
-                x1_red_line = 220
-                x2_red_line = original_imgs.shape[2:][1] - 100
-                y_red_line = original_imgs.shape[2:][0]
+                left_down_bound_pct = 23
+                right_down_bound_pct = 90
+                x1_red_line = int(imgs_to_cv2[0].shape[1] * left_down_bound_pct / 100) #220
+                x2_red_line = int(imgs_to_cv2[0].shape[1] * right_down_bound_pct / 100) #original_imgs.shape[2:][1] - 100
+                y_red_line = imgs_to_cv2[0].shape[0] #original_imgs.shape[2:][0]
                 for i, fnname in zip(range(original_imgs.shape[0]), filenames):
                     np_kpt = np_kps[i]
                     cross = False
@@ -229,7 +231,9 @@ class LaneDetDir(LaneDetVisualizer):
                                                        keypoint_color=self._cfg['keypoint_color'],
                                                        std=None, mean=None, style=self._cfg['style'],
                                                        compare_gt_metric=self._cfg['metric'],
-                                                       idx_red_lines=ind_red_lines)
+                                                       idx_red_lines=ind_red_lines,
+                                                       x1_red_line=x1_red_line,
+                                                       x2_red_line=x2_red_line)
             save_images(results, filenames=filenames)
         
             res_json += [

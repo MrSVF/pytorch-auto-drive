@@ -64,7 +64,7 @@ def segmentation_visualize_batched(images, labels, colors, std=None, mean=None, 
     return results
 
 
-def draw_points(image, points, colors, radius=5, thickness=-1, rl=False):
+def draw_points(image, points, colors, radius=5, thickness=-1, rl=False, x1_red_line=-1, x2_red_line=-1):
     # Draw lines (defined by points) on an image as keypoints
     # colors: can be a list that defines different colors for each line
     for j in range(len(points)):
@@ -73,7 +73,8 @@ def draw_points(image, points, colors, radius=5, thickness=-1, rl=False):
             color = colors[j] if isinstance(colors[0], list) else colors
             cv2.circle(image, (int(temp[k][0]), int(temp[k][1])), radius=radius, color=color, thickness=thickness)
             if rl:
-                cv2.line(image, (250, 800), (960-100, 800), color=(0, 0, 255), thickness=40)
+                y_red_line = image.shape[0]
+                cv2.line(image, (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=40)
     return image
 
 
@@ -95,7 +96,9 @@ def lane_detection_visualize_batched(images, masks=None, keypoints=None,
                                      mask_colors=None, keypoint_color=None, std=None, mean=None,
                                      control_points=None, gt_keypoints=None, style='point', line_trans=0.4,
                                      compare_gt_metric='culane',
-                                     idx_red_lines=[]):
+                                     idx_red_lines=[],
+                                     x1_red_line=-1,
+                                     x2_red_line=-1):
     # Draw images + lanes from tensors (batched)
     # None masks/keypoints and keypoints (x < 0 or y < 0) will be ignored
     # images (4D), masks (3D), keypoints (4D), colors (2D), std, mean: torch.Tensor
@@ -137,7 +140,7 @@ def lane_detection_visualize_batched(images, masks=None, keypoints=None,
                 red_line = False
                 if i in idx_red_lines:
                     red_line = True
-                images[i] = draw_points(images[i], keypoints[i], keypoint_color, rl=red_line)
+                images[i] = draw_points(images[i], keypoints[i], keypoint_color, rl=red_line, x1_red_line=x1_red_line, x2_red_line=x2_red_line)
             elif style in ['line', 'bezier']:
                 overlay = images[i].copy()
                 if gt_keypoints is not None:
