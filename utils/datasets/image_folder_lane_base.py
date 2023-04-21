@@ -20,7 +20,8 @@ class ImageFolderLaneBase(torchvision.datasets.VisionDataset):
 
     def __getitem__(self, index):
         # Return transformed image / original image / save filename / labels (if exist)
-        img = Image.open(self.images[index]).convert('RGB')
+        # img = Image.open(self.images[index]).convert('RGB') # ORIGINAL code
+        img = Image.open(self.images[index]).convert('RGB').crop((560, 220, 2000, 1000))
         filename = os.path.join(self.output_dir, self.filenames[index])
         original_img = F.to_tensor(img).clone()
         mask = None
