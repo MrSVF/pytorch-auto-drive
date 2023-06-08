@@ -180,8 +180,8 @@ class LaneDetDir(LaneDetVisualizer):
                 solidlines = []
                 up_border = imgs_to_cv2[0].shape[0]*0.51
                 down_border = imgs_to_cv2[0].shape[0]*0.7#73
-                left_down_bound_pct = 23
-                right_down_bound_pct = 90
+                left_down_bound_pct = 25
+                right_down_bound_pct = 75
                 x1_red_line = int(imgs_to_cv2[0].shape[1] * left_down_bound_pct / 100) #220
                 x2_red_line = int(imgs_to_cv2[0].shape[1] * right_down_bound_pct / 100) #original_imgs.shape[2:][1] - 100
                 y_red_line = imgs_to_cv2[0].shape[0] #original_imgs.shape[2:][0]
