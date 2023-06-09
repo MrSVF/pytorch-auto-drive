@@ -19,9 +19,15 @@ class ImageFolderLaneBase(torchvision.datasets.VisionDataset):
         self.keypoint_process_fn = keypoint_process_fn
 
     def __getitem__(self, index):
-        # Return transformed image / original image / save filename / labels (if exist)
-        # img = Image.open(self.images[index]).convert('RGB') # ORIGINAL code
-        img = Image.open(self.images[index]).convert('RGB').crop((560, 220, 2000, 1000))
+        """Return transformed image / original image / save filename / labels (if exist)
+
+        Args:
+            index (int): Frame index
+
+        Returns:
+            array, array, dictionary: transformed image, original image, dict with keypoints
+        """
+        img = Image.open(self.images[index]).convert('RGB').crop((560, 220, 2000, 1000)) # Crop frame to ensure detection
         filename = os.path.join(self.output_dir, self.filenames[index])
         original_img = F.to_tensor(img).clone()
         mask = None
@@ -33,10 +39,7 @@ class ImageFolderLaneBase(torchvision.datasets.VisionDataset):
 
         # Transforms
         if self.transforms is not None:
-            # print('\n type(self.transforms): ', type(self.transforms))
-            # print('\n img.size: ', img.size)
             img = self.transforms(img)
-            # print('\n img.size(): ', img.size())
 
         # Process potential target
         keypoint = None

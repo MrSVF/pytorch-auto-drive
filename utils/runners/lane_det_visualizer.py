@@ -145,6 +145,8 @@ class LaneDetDir(LaneDetVisualizer):
         return dataloader, cfg['dataset']['name']
 
     def run(self):
+        """Running model inference, processing results, filtering and generating the resulting json
+        """
         solidline_detector = SolidLaneDet()
         res_json =[]
         x_down_poses = []
@@ -179,12 +181,12 @@ class LaneDetDir(LaneDetVisualizer):
                 koefs = ()
                 solidlines = []
                 up_border = imgs_to_cv2[0].shape[0]*0.51
-                down_border = imgs_to_cv2[0].shape[0]*0.7#73
+                down_border = imgs_to_cv2[0].shape[0]*0.7
                 left_down_bound_pct = 25
                 right_down_bound_pct = 75
-                x1_red_line = int(imgs_to_cv2[0].shape[1] * left_down_bound_pct / 100) #220
-                x2_red_line = int(imgs_to_cv2[0].shape[1] * right_down_bound_pct / 100) #original_imgs.shape[2:][1] - 100
-                y_red_line = imgs_to_cv2[0].shape[0] #original_imgs.shape[2:][0]
+                x1_red_line = int(imgs_to_cv2[0].shape[1] * left_down_bound_pct / 100)
+                x2_red_line = int(imgs_to_cv2[0].shape[1] * right_down_bound_pct / 100)
+                y_red_line = imgs_to_cv2[0].shape[0]
                 for i, fnname in zip(range(original_imgs.shape[0]), filenames):
                     np_kpt = np_kps[i]
                     cross = False
@@ -215,10 +217,6 @@ class LaneDetDir(LaneDetVisualizer):
                         solidline = solidline_detector.detect_stoplineB(imgs_to_cv2[i], koefs, down_border, up_border)
                         if solidline:
                             solidlines.append(fnname)
-                    #     original_imgs[i] = original_imgs[i].clamp_(0.0, 1.0) * 255.0
-                    #     original_imgs[i] = original_imgs[..., [2, 1, 0]][i].cpu().numpy().astype(np.uint8)        
-                    #     cv2.line(original_imgs[i], (x1_red_line, y_red_line), (x2_red_line, y_red_line), color=(0, 0, 255), thickness=10)
-                        # print('solidlines:', [sol.split('/')[-1] for sol in solidlines])
                     else:
                         x_down_poses.append(-1)
 
