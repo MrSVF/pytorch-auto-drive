@@ -27,7 +27,12 @@ class ImageFolderLaneBase(torchvision.datasets.VisionDataset):
         Returns:
             array, array, dictionary: transformed image, original image, dict with keypoints
         """
-        img = Image.open(self.images[index]).convert('RGB').crop((560, 220, 2000, 1000)) # Crop frame to ensure detection
+        img = Image.open(self.images[index]).convert('RGB')
+        if img.size==(2560, 1440):
+            img = img.crop((560, 220, 2000, 1000)) # Crop frame to ensure detection
+        elif img.size==(1920, 1080):
+            img = img.crop((240, 150, 1680, 930)) # Crop frame to ensure detection
+
         filename = os.path.join(self.output_dir, self.filenames[index])
         original_img = F.to_tensor(img).clone()
         mask = None
